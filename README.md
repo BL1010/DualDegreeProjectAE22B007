@@ -94,15 +94,6 @@ The game follows the standard Catan flow:
 - Players can build roads, settlements, and industries if they have enough resources
 - The game ends when a player reaches the victory point threshold
 
-## Notes
 
-This repository is best thought of as a logic engine and simulation foundation. It does not currently include a polished graphical user interface or full multiplayer network layer, but it is ready to be extended for:
 
-- AI agents or reinforcement learning experiments
-- rule validation and testing
-- richer UI development
-- game-state analysis tools
 
-## License
-
-No explicit license file is included in this repository, so usage rights are currently unspecified unless added by the repository owner.
