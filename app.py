@@ -1,115 +1,104 @@
-from board import Board
-from player import Player
+from env import CatanEnv
 
 
-board = Board()
-board.initialize_board()
+env = CatanEnv(n_players=4)
 
-player1 = Player("red")
-player2 = Player("blue")
+state = env.reset()
 
-print("Initial placement")
+while state["phase"] == "initial_placement":
 
-v1 = 0
+    vertex_id = env.game.get_valid_initial_settlements()[0]
 
-print(
-    "P1 settlement:",
-    board.place_settlement(player1, v1, initial=True)
-)
+    state, reward, done, info = env.step({
+        "type": "place_initial_settlement",
+        "vertex_id": vertex_id
+    })
 
-print(
-    "P1 settlement list:",
-    player1.settlements
-)
+    edge_id = env.game.get_valid_initial_roads()[0]
 
-print(
-    "Vertex owner:",
-    board.vertices[v1].owner
-)
-
-print(
-    "Vertex building:",
-    board.vertices[v1].building
-)
-
-neighbors = list(board.vertex_to_vertices[v1])
-
-v2 = neighbors[0]
-
-print(
-    "P2 settlement next to P1:",
-    board.place_settlement(player2, v2, initial=True)
-)
-edge_id = list(board.vertex_to_edges[v1])[0]
-
-print(
-    "P1 road:",
-    board.place_road(player1, edge_id)
-)
-
-print(
-    "P1 roads:",
-    player1.roads
-)
-
-print(
-    "Edge owner:",
-    board.edges[edge_id].owner
-)
-
-edge = board.edges[edge_id]
-
-if edge.v1 == v1:
-    next_vertex = edge.v2
-else:
-    next_vertex = edge.v1
-
-print(
-    "P1 normal settlement:",
-    board.place_settlement(player1, next_vertex)
-)
-
-from game import Game  
+    state, reward, done, info = env.step({
+        "type": "place_initial_road",
+        "edge_id": edge_id
+    })
 
 
-game = Game(n_players=4) 
+print("Initial placement completed")
+print()
 
-game.start() 
+print("Current player:", env.game.current_player.color)
+print("Phase:", env.game.phase)
+print()
 
-print("Initial placement order:")
-print(
-    [
-        game.players[i].color 
-        for i in game.initial_placement_order
-    ]
-)
+
+print("ROLLING DICE")
+
+state, reward, done, info = env.step({
+    "type": "roll"
+})
+
+print("Dice:", env.game.last_roll)
+print("Phase:", env.game.phase)
+print("Roll successful:", info["success"])
+print()
+
+
+print("RESOURCE STATE AFTER ROLL")
+
+for player in env.game.players:
+    print(
+        player.color,
+        player.resources
+    )
 
 print()
 
-print("current player: ",game.current_player.color) 
-print("Valid settlements",game.get_valid_initial_settlements()) 
 
-vertex_id = game.get_valid_initial_settlements()[0]
+print("TESTING BUILD")
 
-print(
-    "Settlement:",
-    game.place_initial_settlement(vertex_id)
-)
+player = env.game.current_player
 
-print(
-    "Current player:",
-    game.current_player.color
-)
+player.resources["wood"] = 10
+player.resources["brick"] = 10
+player.resources["sheep"] = 10
+player.resources["wheat"] = 10
+player.resources["ore"] = 10
 
-print(
-    "Step:",
-    game.placement_step
-)
+print("Resources before building:")
+print(player.resources)
+print()
 
 
-road_id = game.get_valid_initial_roads()[0]
+valid_edges = []
 
-print(
-    "Road:",
-    game.place_initial_road(road_id)
-)
+for edge_id in env.game.board.edges:
+    if env.game.board.can_place_road(player, edge_id):
+        valid_edges.append(edge_id)
+
+edge_id = valid_edges[0]
+
+state, reward, done, info = env.step({
+    "type": "build_road",
+    "edge_id": edge_id
+})
+
+print("Built road at edge:", edge_id)
+print("Build successful:", info["success"])
+print("Resources after building:")
+print(player.resources)
+print("Player roads:", player.roads)
+print()
+
+
+print("ENDING TURN")
+
+old_player = player.color
+
+state, reward, done, info = env.step({
+    "type": "end_turn"
+})
+
+print("Ended turn for:", old_player)
+print("End turn successful:", info["success"])
+print("New current player:", env.game.current_player.color)
+print("New phase:", env.game.phase)
+print("New round:", env.game.round_number)
